@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun May 06 16:52:35 2018
-@author: admin
-"""
+# Prior to calculating the YETI index you need to clean your RR data with your favourite tool available from other sources
 
-# SETTING WORKING ENVIRONMENT
+# 1. SETTING THE WORKING ENVIRONMENT
 
 # Import Python packages
 
@@ -18,13 +15,12 @@ from scipy.interpolate import splrep, splev
 from scipy.signal import argrelmax
 
  
-# Indicate working directory, saving directory and data folder address
+# Indicate your working directory, saving directory and data folder address
 
-MyDir = 'C://Users/E/Desktop/Ewa/PYTON/YETI_OffCode'
-SaveDir = MyDir
-data_folder = './data/'
+MyDir = 
+SaveDir = 
+data_folder = 
 os.chdir(MyDir)
-os.getcwd()
 
 # Create collective variables for all participants
 
@@ -32,14 +28,14 @@ SUB_all = []
 
 YETI_AV_all = []
 YETI_SD_all = []
-FpMax_AV_all = []
-FpMax_SD_all = []
+fPmax_AV_all = []
+fPmax_SD_all = []
 
 YETI_sessions = []
-FpMax_sessions = []
+fPmax_sessions = []
 
 
-# LOADING DATA
+# Load data
              
 for sub in sorted(os.listdir(data_folder)):
 
@@ -52,51 +48,32 @@ for sub in sorted(os.listdir(data_folder)):
         rr = list(map(float, rr.split('\n')[:-1]))
         rr = np.array(rr)
         
-         
-# ARTIFFACT CORRECTION
-        
-        for i in range(len(rr[1:-2])):
-            
-            if rr[i] > 1300: 
-                if rr[i+1] <= 1300:
-                    rr[i] = (rr[i-1]+rr[i+2])/2
-                else: 
-                    if rr[i+2] <= 1300:
-                        rr[i] = (rr[i-1]+rr[i+2])/2
-                    else:
-                        rr[i] = (rr[i-1]+rr[i+3])/2
+# Interpolate your data (FFT needs evenly sampled data)
 
-
-# INTERPOLATION (FFT NEEDS EVENLY SAMPLED DATA)
-                        
         t = np.cumsum(rr)/1000.0
         t -= t[0]
         tx = arange(t[0], t[-1], 1.0 / 4.0)
         tck = splrep(t, rr, s=0)
         rrix = splev(tx, tck, der=0)
-        rrix = np.array(rrix)
-        
+        rrix = np.array(rrix)   
         rr_data.append(rrix)
-         
-        #plt.plot(t,rr)
-        #plt.xlabel('Time (sec)')
-        #plt.ylabel('RR interval (ms)')
-        #plt.show()
 
-# FREQUENCY ANALYSIS    
+
+# 2. FREQUENCY ANALYSIS    
     
     # Create variables for each participant
     
     YETI_sub = []
-    FpMax_sub = []
+    fPmax_sub = []
     YETI_AV_sub = []
-    FpMax_AV_sub = []
+    fPmax_AV_sub = []
     YETI_SD_sub=[]
-    FpMax_SD_sub = []
+    fPmax_SD_sub = []
     
     fig, ax = plt.subplots()
               
-    #Calculate the FFT spectrum
+    # Calculate the FFT spectrum; vlf, lf and hf set at standard frequency; 
+    # rf - resonance frequency, here set between 0.052 and 0.132 Hz
     
     def frequency_domain(rri, fs=4.0, vlf_band=(0, 0.04), lf_band=(0.04, 0.15), 
                          hf_band=(0.15, 0.4), rf_band=(0.052, 0.132)):
@@ -113,6 +90,7 @@ for sub in sorted(os.listdir(data_folder)):
                
         return _auc(fxx, pxx, vlf_band, lf_band, hf_band, rf_band, peak)
     
+    # Calculate YETI, fPmax and standard HRV indices: total power, VLF, LF, HF 
     
     def _auc(fxx, pxx, vlf_band, lf_band, hf_band, rf_band, peak):
         vlf_indexes = np.logical_and(fxx >= vlf_band[0], fxx < vlf_band[1])
@@ -129,7 +107,7 @@ for sub in sorted(os.listdir(data_folder)):
         yeti = (rf / total_power)*100        
          
         YETI_sub.append(yeti)
-        FpMax_sub.append(peak)
+        fPmax_sub.append(peak)
         
         return dict(zip(['total_power', 'rf','yeti', 'peak','vlf', 'lf', 'hf'], 
                         [total_power, rf, yeti, peak, vlf, lf, hf]))
@@ -141,9 +119,13 @@ for sub in sorted(os.listdir(data_folder)):
     #Plot figures of all sessions for each participant
     
     ax.set_title(sub)
+    plot_dir = './plots'
+    os.mkdir(plot_dir)
     fname='./plots/' + sub + '.svg'
     fig.savefig(fname)
     fig.show()
+    
+    # 3. CALCULATING STATS ON INDICES
     
     # Calculate YETI_AV & YETI_SD for each participant and append to one dataframe
     
@@ -152,38 +134,38 @@ for sub in sorted(os.listdir(data_folder)):
     YETI_AV_all.append(YETI_AV_sub)
     YETI_SD_all.append(YETI_SD_sub)
     
-    # Calculate FpMax_AV & FpMax_SD for each participant and append to one dataframe 
+    # Calculate fPmax_AV & fPmax_SD for each participant and append to one dataframe 
     
-    FpMax_AV_sub = np.mean(FpMax_sub)
-    FpMax_SD_sub = np.std(FpMax_sub)
-    FpMax_AV_all.append(FpMax_AV_sub)
-    FpMax_SD_all.append(FpMax_SD_sub)
+    fPmax_AV_sub = np.mean(fPmax_sub)
+    fPmax_SD_sub = np.std(fPmax_sub)
+    fPmax_AV_all.append(fPmax_AV_sub)
+    fPmax_SD_all.append(fPmax_SD_sub)
     
-    print (sub, 'YETI_AV',YETI_AV_sub, 'YETI_SD', YETI_SD_sub, 
-           'FpMax_AV', FpMax_AV_sub, 'FpMax_SD', FpMax_SD_sub)
+    print (sub, 'YETI_AV', YETI_AV_sub, 'YETI_SD', YETI_SD_sub, 
+           'fPmax_AV', fPmax_AV_sub, 'fPmax_SD', fPmax_SD_sub)
         
-    # Collect all YETI and FpMax values for all sessions for each participant
+    # Collect all YETI and fPmax values for all sessions for each participant
     
     YETI_i = np.hstack(YETI_sub)
     YETI_sessions.append(YETI_i)
-    FpMax_i=np.hstack(FpMax_sub)
-    FpMax_sessions.append(FpMax_i)
+    fPmax_i=np.hstack(fPmax_sub)
+    fPmax_sessions.append(fPmax_i)
 
     
-# SAVING RESULTS
+# 4. SAVING RESULTS
     
 #Create & save data frames: 
-#1. containing YETI_AV, YETI_SD, FpMax_AV and FpMax_SD of all participants
+#1. containing YETI_AV, YETI_SD, fPmax_AV and fPmax_SD of all participants
     
 YETI_df = pd.DataFrame(data=SUB_all, columns=['ID'])
 YETI_df=YETI_df.assign(YETI_AV=YETI_AV_all)
 YETI_df=YETI_df.assign(YETI_SD=YETI_SD_all)
-YETI_df=YETI_df.assign(FpMax_AV=FpMax_AV_all)
-YETI_df=YETI_df.assign(FpMax_SD=FpMax_SD_all)
-YETI_df.to_csv('./YETI_FpMax.csv')
+YETI_df=YETI_df.assign(fPmax_AV=fPmax_AV_all)
+YETI_df=YETI_df.assign(fPmax_SD=fPmax_SD_all)
+YETI_df.to_csv('./YETI_fPmax.csv')
 
-#2. containing YETI and FpMax values from each session of all participants
+#2. containing YETI and fPmax values from each session of all participants
 
 sessions_df = pd.DataFrame(data=YETI_sessions, columns=['YETI'])
-sessions_df = sessions_df.assign(FpMax=FpMax_sessions)
+sessions_df = sessions_df.assign(fPmax=fPmax_sessions)
 sessions_df.to_csv('./Session_data.csv')
