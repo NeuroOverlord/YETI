@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-# Prior to calculating the YETI index you need to clean your RR data with your favourite tool available from other sources
+
+# CAUTION! 
+# Prior to calculating the YETI index clean your RR data with your favourite tool
 
 # 1. SETTING THE WORKING ENVIRONMENT
 
@@ -14,13 +16,17 @@ from scipy.signal import welch
 from scipy.interpolate import splrep, splev
 from scipy.signal import argrelmax
 
- 
+
 # Indicate your working directory, saving directory and data folder address
 
-MyDir = 
-SaveDir = 
-data_folder = 
+MyDir = 'C://Users/E/Desktop/Ewa/PYTON/YETI_OffCode'
+SaveDir = MyDir
+data_folder =  './corrected/'
+plot_dir = './plots'
+
+os.mkdir(plot_dir)
 os.chdir(MyDir)
+   
 
 # Create collective variables for all participants
 
@@ -35,7 +41,7 @@ YETI_sessions = []
 fPmax_sessions = []
 
 
-# Load data
+# Load artifact-free RR data
              
 for sub in sorted(os.listdir(data_folder)):
 
@@ -119,13 +125,12 @@ for sub in sorted(os.listdir(data_folder)):
     #Plot figures of all sessions for each participant
     
     ax.set_title(sub)
-    plot_dir = './plots'
-    os.mkdir(plot_dir)
-    fname='./plots/' + sub + '.svg'
+    fname=plot_dir +'/' + sub + '.svg'
     fig.savefig(fname)
     fig.show()
     
-    # 3. CALCULATING STATS ON INDICES
+
+# 3. CALCULATING STATS ON INDICES
     
     # Calculate YETI_AV & YETI_SD for each participant and append to one dataframe
     
@@ -153,9 +158,9 @@ for sub in sorted(os.listdir(data_folder)):
 
     
 # 4. SAVING RESULTS
-    
-#Create & save data frames: 
-#1. containing YETI_AV, YETI_SD, fPmax_AV and fPmax_SD of all participants
+
+# Create & save data frames: 
+# 1. containing YETI_AV, YETI_SD, fPmax_AV and fPmax_SD of all participants
     
 YETI_df = pd.DataFrame(data=SUB_all, columns=['ID'])
 YETI_df=YETI_df.assign(YETI_AV=YETI_AV_all)
@@ -164,8 +169,20 @@ YETI_df=YETI_df.assign(fPmax_AV=fPmax_AV_all)
 YETI_df=YETI_df.assign(fPmax_SD=fPmax_SD_all)
 YETI_df.to_csv('./YETI_fPmax.csv')
 
-#2. containing YETI and fPmax values from each session of all participants
+# 2. containing YETI and fPmax values from each session of all participants
 
-sessions_df = pd.DataFrame(data=YETI_sessions, columns=['YETI'])
-sessions_df = sessions_df.assign(fPmax=fPmax_sessions)
+sessions_YETI_df = pd.DataFrame(data=YETI_sessions, 
+                                columns=['YETI_S1', 'YETI_S2', 'YETI_3', 'YETI_S4', 
+                                         'YETI_S5', 'YETI_S6', 'YETI_S7', 'YETI_S8',
+                                         'YETI_S9', 'YETI_S10', 'YETI_S11', 'YETI_S12', 
+                                         'YETI_S13', 'YETI_S14', 'YETI_S15', 'YETI_S16', 
+                                         'YETI_S17', 'YETI_S18', 'YETI_S19', 'YETI_S20'])
+sessions_fPmax_df = pd.DataFrame(data=fPmax_sessions,
+                                 columns=['fPmax_S1', 'fPmax_S2', 'fPmax_S3', 'fPmax_S4', 
+                                         'fPmax_S5', 'fPmax_S6', 'fPmax_S7', 'fPmax_S8',
+                                         'fPmax_S9', 'fPmax_S10', 'fPmax_S11', 'fPmax_S12', 
+                                         'fPmax_S13', 'fPmax_S14', 'fPmax_S15', 'fPmax_S16', 
+                                         'fPmax_S17', 'fPmax_S18', 'fPmax_S19', 'fPmax_S20'])
+frames = [sessions_YETI_df, sessions_fPmax_df]
+sessions_df = pd.concat(frames, axis=1)
 sessions_df.to_csv('./Session_data.csv')
